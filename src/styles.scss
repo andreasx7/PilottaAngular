@@ -1,1 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+body, html {
+    overflow: hidden;
+    touch-action: none; /* Disable touch scroll during drag */
+  }

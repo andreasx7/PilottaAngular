@@ -1,0 +1,53 @@
+<div class="game-layout">
+    <!-- Section 1: Left Player -->
+    <div class="section1">
+        <div>Player 4</div>
+
+      <app-player [player]="players[3]" position="left" (cardDropped)="onCardDrop($event)"></app-player>
+    </div>
+  
+    <!-- Section 2: Middle Layout -->
+    <div class="section2">
+      <!-- Top Player -->
+      <div class="top-player">
+        <div>Player 3</div>
+
+        <app-player [player]="players[2]" position="top" (cardDropped)="onCardDrop($event)"></app-player>
+      </div>
+  
+      <!-- Game Board -->
+      <div class="game-board"
+      (dragover)="allowDrop($event)" 
+     (drop)="onDrop($event)" 
+       >
+        <div class="deck"></div> <!-- Central deck from where cards are dealt -->
+        <div class="played-cards">
+            <div *ngFor="let card of boardCards" class="card">
+              <app-card [card]="card"></app-card>
+            </div>
+          </div>
+        <div class="message-area">
+          <p>{{ gameMessage }}</p>
+          <ng-template [ngIf]="!isStarted">
+            <button class="start-btn" mat-button (click)="startGame()">Start Game</button>
+        </ng-template>
+        </div>
+      </div>
+  
+      <!-- Bottom Player -->
+      <div class="bottom-player">
+        <div>You</div>
+        <app-player [player]="players[0]" position="bottom" (cardDropped)="onCardDrop($event)"></app-player>
+      </div>
+    </div>
+  
+    <!-- Section 3: Right Player -->
+    <div class="section3">
+        <div>Player 2</div>
+      <app-player [player]="players[1]" position="right" (cardDropped)="onCardDrop($event)"></app-player>
+    </div>
+  
+    <!-- Start Button -->
+    
+  </div>
+  
