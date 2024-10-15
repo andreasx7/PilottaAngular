@@ -73,5 +73,38 @@ export class GameService {
       return valueOrder[a.value] - valueOrder[b.value];
     });
   }
+
+  determineWinningCard(boardCards: any[]): any {
+    // Ensure there are cards on the board
+    if (boardCards.length === 0) {
+      return null; // No cards played, so no winner
+    }
+
+    // Placeholder logic (you can replace this with your actual game rules)
+    // For now, let's assume the first card is the winner
+    let winningCard = boardCards[0];
+
+    // Logic to determine the actual winning card (replace this with your game logic)
+    for (let card of boardCards) {
+      // Example: Replace this with your custom rules for determining the winner
+      if (this.isWinningCard(card, winningCard)) {
+        winningCard = card;
+      }
+    }
+
+    // Return the winning card
+    return winningCard;
+  }
+
+  isWinningCard(card: any, currentWinner: any): boolean {
+    // Placeholder logic: You can compare based on value, suit, or other rules
+    // Example: Compare based on card value (assume higher value wins)
+    const cardOrder = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A']; // Example card order
+    const cardValueIndex = cardOrder.indexOf(card.value);
+    const currentWinnerValueIndex = cardOrder.indexOf(currentWinner.value);
+
+    // Return true if the card has a higher value (adjust based on your game's rules)
+    return cardValueIndex > currentWinnerValueIndex;
+  }
   
 }
