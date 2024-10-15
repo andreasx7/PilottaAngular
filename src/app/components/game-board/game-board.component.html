@@ -25,12 +25,20 @@
             <div *ngFor="let card of boardCards" class="card">
               <app-card [card]="card"></app-card>
             </div>
+        </div>
+        <div *ngIf="!isStarted && !koziSelected" class="kozi-dialog">
+          <h2>Select the Kozi (Trump Suit)</h2>
+          <div class="kozi-options">
+            <button *ngFor="let suit of suits" (click)="selectKozi(suit)">
+              {{ suit | titlecase }}
+            </button>
           </div>
+        </div>
         <div class="message-area">
           <p>{{ gameMessage }}</p>
-          <ng-template [ngIf]="!isStarted">
+          <!-- <ng-template [ngIf]="!isStarted">
             <button class="start-btn" mat-button (click)="startGame()">Start Game</button>
-        </ng-template>
+          </ng-template> -->
         </div>
       </div>
   

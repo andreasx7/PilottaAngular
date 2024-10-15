@@ -19,6 +19,7 @@ export class GameService {
   private values = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
   private deck: Card[] = [];
   public players: Player[] = [];
+  private kozi: string | null = null; // Store selected kozi (trump suit)
 
   constructor() {}
 
@@ -60,6 +61,14 @@ export class GameService {
     return this.players;
   }
 
+  setKozi(suit: string) {
+    this.kozi = suit; // Store selected kozi (trump suit)
+  }
+
+  getKozi(): string | null {
+    return this.kozi;
+  }
+
   sortHand(hand: Card[]): Card[] {
     const suitOrder:any = { 'hearts': 1, 'spades': 2, 'diamonds': 3, 'clubs': 4 };
     const valueOrder:any = { 'ace': 1, 'king': 2, 'queen': 3, 'jack': 4, '10': 5, '9': 6, '8': 7, '7': 8 };
@@ -75,35 +84,35 @@ export class GameService {
   }
 
   determineWinningCard(boardCards: any[]): any {
-    // Ensure there are cards on the board
     if (boardCards.length === 0) {
       return null; // No cards played, so no winner
     }
-
-    // Placeholder logic (you can replace this with your actual game rules)
-    // For now, let's assume the first card is the winner
+  
     let winningCard = boardCards[0];
-
+  
     // Logic to determine the actual winning card (replace this with your game logic)
     for (let card of boardCards) {
-      // Example: Replace this with your custom rules for determining the winner
       if (this.isWinningCard(card, winningCard)) {
         winningCard = card;
       }
     }
-
-    // Return the winning card
+  
     return winningCard;
   }
 
   isWinningCard(card: any, currentWinner: any): boolean {
-    // Placeholder logic: You can compare based on value, suit, or other rules
-    // Example: Compare based on card value (assume higher value wins)
-    const cardOrder = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A']; // Example card order
+    const cardOrder = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
     const cardValueIndex = cardOrder.indexOf(card.value);
     const currentWinnerValueIndex = cardOrder.indexOf(currentWinner.value);
 
-    // Return true if the card has a higher value (adjust based on your game's rules)
+    // If both cards are of the kozi suit, apply kozi-specific rules
+    if (card.suit === this.kozi && currentWinner.suit !== this.kozi) {
+      return true; // Any kozi card beats a non-kozi card
+    } else if (card.suit === this.kozi && currentWinner.suit === this.kozi) {
+      return cardValueIndex > currentWinnerValueIndex; // Higher value kozi wins
+    }
+
+    // If neither card is a kozi, use normal rules
     return cardValueIndex > currentWinnerValueIndex;
   }
   

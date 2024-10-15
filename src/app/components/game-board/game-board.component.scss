@@ -107,6 +107,7 @@
     border: 1px solid black;
     border-radius: 5px;
   }
+  
 
   .section1, .section3 {
     display: flex;
@@ -136,6 +137,24 @@
     font-weight: bold;
     font-size: 20px;
     background-color: gold;
+  }
+
+  .kozi-dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border: 2px solid #ccc;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .kozi-options button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
   }
   
   @media (max-width: 768px) {
