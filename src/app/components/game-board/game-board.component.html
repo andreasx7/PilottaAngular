@@ -1,61 +1,86 @@
-<div class="game-layout">
-    <!-- Section 1: Left Player -->
-    <div class="section1">
-        <div>Player 4</div>
+<div> 
+  <!-- Start Button -->
+  <button style="color:black !important;" mat-button *ngIf="!isStarted" (click)="startGame()" class="start-btn">Start Game</button>
+</div>
 
-      <app-player [player]="players[3]" position="left" (cardDropped)="onCardDrop($event)"></app-player>
-    </div>
+<!-- Kozi and Bidding Dialog (positioned above the game layout to avoid blocking) -->
+<div *ngIf="koziSelectionInProgress" class="kozi-dialog">
+  <h2>Turn for {{ currentBidder.name }} to Bid</h2>
   
-    <!-- Section 2: Middle Layout -->
-    <div class="section2">
-      <!-- Top Player -->
-      <div class="top-player">
-        <div>Player 3</div>
+  <!-- Only show input when it's the human's turn to bid -->
+  <div *ngIf="!currentBidder.isBot">
+    <form [formGroup]="biddingForm">
+      <mat-label>Select Bid:</mat-label>
+      <mat-select formControlName="bidPoints">
+        <mat-option *ngFor="let point of bidPointsArray" [value]="point">
+          {{ point }}
+        </mat-option>
+      </mat-select>
+      <mat-label>Select Kozi:</mat-label>
+      <mat-select formControlName="bidSuit">
+        <mat-option *ngFor="let suit of suits" [value]="suit">
+          {{ suit | titlecase }}
+        </mat-option>
+      </mat-select>
 
-        <app-player [player]="players[2]" position="top" (cardDropped)="onCardDrop($event)"></app-player>
+      <div class="bid-buttons">
+        <button (click)="placeBid()">Place Bid</button>
+        <button (click)="passBid()">Pass</button>
       </div>
-  
-      <!-- Game Board -->
-      <div class="game-board"
-      (dragover)="allowDrop($event)" 
-     (drop)="onDrop($event)" 
-       >
-        <div class="deck"></div> <!-- Central deck from where cards are dealt -->
-        <div class="played-cards">
-            <div *ngFor="let card of boardCards" class="card">
-              <app-card [card]="card"></app-card>
-            </div>
-        </div>
-        <div *ngIf="!isStarted && !koziSelected" class="kozi-dialog">
-          <h2>Select the Kozi (Trump Suit)</h2>
-          <div class="kozi-options">
-            <button *ngFor="let suit of suits" (click)="selectKozi(suit)">
-              {{ suit | titlecase }}
-            </button>
-          </div>
-        </div>
-        <div class="message-area">
-          <p>{{ gameMessage }}</p>
-          <!-- <ng-template [ngIf]="!isStarted">
-            <button class="start-btn" mat-button (click)="startGame()">Start Game</button>
-          </ng-template> -->
-        </div>
-      </div>
-  
-      <!-- Bottom Player -->
-      <div class="bottom-player">
-        <div>You</div>
-        <app-player [player]="players[0]" position="bottom" (cardDropped)="onCardDrop($event)"></app-player>
-      </div>
-    </div>
-  
-    <!-- Section 3: Right Player -->
-    <div class="section3">
-        <div>Player 2</div>
-      <app-player [player]="players[1]" position="right" (cardDropped)="onCardDrop($event)"></app-player>
-    </div>
-  
-    <!-- Start Button -->
-    
+    </form>
   </div>
-  
+
+  <!-- Bots bidding -->
+  <div *ngIf="currentBidder.isBot" class="bot-bid-message">
+    <p>{{ currentBidder.name }} is bidding...</p>
+  </div>
+</div>
+
+<div class="game-layout">
+  <!-- Section 1: Left Player -->
+  <div class="section1 player-side">
+    <div class="player-label">Player 4</div>
+    <app-player [player]="players[3]" position="left" (cardDropped)="onCardDrop($event,players[3])"></app-player>
+  </div>
+
+  <!-- Section 2: Middle Layout -->
+  <div class="section2">
+    <!-- Top Player -->
+    <div class="top-player player-side">
+      <div class="player-label">Player 3</div>
+      <app-player [player]="players[2]" position="top" (cardDropped)="onCardDrop($event,players[2])"></app-player>
+    </div>
+
+    <!-- Game Board -->
+    <div class="game-board" (dragover)="allowDrop($event)" (drop)="onDrop($event, currentPlayer)">
+      <div class="played-cards">
+        <div *ngFor="let boardCard of boardCards; let i = index" 
+       [ngClass]="{
+         'card': true, 
+         'bottom-player': boardCard.player.position === 'bottom', 
+         'right-player': boardCard.player.position === 'right', 
+         'top-player': boardCard.player.position === 'top', 
+         'left-player': boardCard.player.position === 'left'
+       }">
+    <app-card [card]="boardCard.card"></app-card>
+  </div>
+      </div>
+    
+      <div class="message-area">
+        <p>{{ gameMessage }}</p>
+      </div>
+    </div>
+
+    <!-- Bottom Player -->
+    <div class="bottom-player player-side">
+      <div class="player-label">You</div>
+      <app-player [player]="players[0]" position="bottom" (cardDropped)="onCardDrop($event,players[0])"></app-player>
+    </div>
+  </div>
+
+  <!-- Section 3: Right Player -->
+  <div class="section3 player-side">
+    <div class="player-label">Player 2</div>
+    <app-player [player]="players[1]" position="right" (cardDropped)="onCardDrop($event,players[1])"></app-player>
+  </div>
+</div>

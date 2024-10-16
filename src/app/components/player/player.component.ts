@@ -1,4 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, Renderer2 } from '@angular/core';
+import { Player } from './player-interface';
 
 @Component({
   selector: 'app-player',
@@ -6,7 +7,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, Renderer2 } from '@
   styleUrls: ['./player.component.scss']
 })
 export class PlayerComponent {
-  @Input() player: any;
+  @Input() player!: Player;
   @Input() position!: string;  // Position (top, bottom, left, right)
   @Output() cardDropped = new EventEmitter<any>();  // Custom event for card drop
   isDealing = true

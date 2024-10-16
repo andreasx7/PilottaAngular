@@ -4,6 +4,7 @@ import { GameBoardComponent } from '../../components/game-board/game-board.compo
 import { PlayerComponent } from '../../components/player/player.component';
 import { CardComponent } from '../../components/card/card.component';
 import { MaterialModule } from '../../shared/material/material.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -13,7 +14,9 @@ import { MaterialModule } from '../../shared/material/material.module';
   ],
   imports: [
     CommonModule,
-    MaterialModule // Import Angular Material here
+    MaterialModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   exports: [
     GameBoardComponent,

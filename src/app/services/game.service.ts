@@ -20,6 +20,7 @@ export class GameService {
   private deck: Card[] = [];
   public players: Player[] = [];
   private kozi: string | null = null; // Store selected kozi (trump suit)
+  public currentBid: { points: number, suit: string, player: Player | null } | null = null; // Store the current bid
 
   constructor() {}
 
@@ -47,14 +48,26 @@ export class GameService {
     this.players.push({ name: 'You', hand: [], isBot: false });  // Human player
   
     // Add bots in anti-clockwise order: Bot 1 (Right), Bot 2 (Top), Bot 3 (Left)
-    this.players.push({ name: 'Bot 1', hand: [], isBot: true });  // Right
-    this.players.push({ name: 'Bot 2', hand: [], isBot: true });  // Top
-    this.players.push({ name: 'Bot 3', hand: [], isBot: true });  // Left
+    this.players.push({ name: 'Player 2', hand: [], isBot: true });  // Right
+    this.players.push({ name: 'Player 3', hand: [], isBot: true });  // Top
+    this.players.push({ name: 'Player 4', hand: [], isBot: true });  // Left
   
     // Deal cards
     this.players.forEach(player => {
       player.hand = this.deck.splice(0, cardsPerPlayer);
     });
+  }
+
+  resetBidding() {
+    this.currentBid = { points: 0, suit: '', player: null };  // Reset the bid at the start of each round
+  }
+
+  updateBid(points: number, suit: string, player: Player) {
+    this.currentBid = { points, suit, player };  // Update the current highest bid
+  }
+  
+  getCurrentBid() {
+    return this.currentBid;
   }
   
   getPlayers() {
@@ -101,14 +114,19 @@ export class GameService {
   }
 
   isWinningCard(card: any, currentWinner: any): boolean {
-    const cardOrder = ['7', '8', '9', '10', 'jack', 'queen', 'king', 'ace'];
-    const cardValueIndex = cardOrder.indexOf(card.value);
+    let actualCard = card.card
+    const cardOrder = ['7', '8', '9', 'jack', 'queen', 'king','10', 'ace'];
+    const koziCardOrder = ['7', '8', 'queen', 'king', '10', 'ace','9','jack'];
+    const cardValueIndex = cardOrder.indexOf(actualCard.value);
     const currentWinnerValueIndex = cardOrder.indexOf(currentWinner.value);
+    const koziCardValueIndex = koziCardOrder.indexOf(actualCard.value);
+    const koziCurrentWinnerValueIndex = koziCardOrder.indexOf(currentWinner.value);
 
     // If both cards are of the kozi suit, apply kozi-specific rules
-    if (card.suit === this.kozi && currentWinner.suit !== this.kozi) {
-      return true; // Any kozi card beats a non-kozi card
-    } else if (card.suit === this.kozi && currentWinner.suit === this.kozi) {
+    if (actualCard.suit === this.kozi && currentWinner.suit !== this.kozi) {
+      return koziCardValueIndex > koziCurrentWinnerValueIndex; // Higher value kozi wins
+    } 
+    else if (actualCard.suit === this.kozi && currentWinner.suit === this.kozi) {
       return cardValueIndex > currentWinnerValueIndex; // Higher value kozi wins
     }
 
