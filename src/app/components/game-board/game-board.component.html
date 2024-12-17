@@ -24,8 +24,8 @@
       </mat-select>
 
       <div class="bid-buttons">
-        <button (click)="placeBid()">Place Bid</button>
-        <button (click)="passBid()">Pass</button>
+        <button class="bid-btn" mat-button (click)="placeBid()">Place Bid</button>
+        <button class="pass-btn" mat-button (click)="passBid()">Pass</button>
       </div>
     </form>
   </div>
@@ -52,7 +52,7 @@
     </div>
 
     <!-- Game Board -->
-    <div class="game-board" (dragover)="allowDrop($event)" (drop)="onDrop($event, currentPlayer)">
+    <div class="game-board" (dragover)="allowDrop($event)" (drop)="onDrop($event, currentPLayerIndex)">
       <div class="played-cards">
         <div *ngFor="let boardCard of boardCards; let i = index" 
        [ngClass]="{

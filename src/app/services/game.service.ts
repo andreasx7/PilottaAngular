@@ -118,15 +118,15 @@ export class GameService {
     const cardOrder = ['7', '8', '9', 'jack', 'queen', 'king','10', 'ace'];
     const koziCardOrder = ['7', '8', 'queen', 'king', '10', 'ace','9','jack'];
     const cardValueIndex = cardOrder.indexOf(actualCard.value);
-    const currentWinnerValueIndex = cardOrder.indexOf(currentWinner.value);
+    const currentWinnerValueIndex = cardOrder.indexOf(currentWinner.card.value);
     const koziCardValueIndex = koziCardOrder.indexOf(actualCard.value);
-    const koziCurrentWinnerValueIndex = koziCardOrder.indexOf(currentWinner.value);
+    const koziCurrentWinnerValueIndex = koziCardOrder.indexOf(currentWinner.card.value);
 
     // If both cards are of the kozi suit, apply kozi-specific rules
-    if (actualCard.suit === this.kozi && currentWinner.suit !== this.kozi) {
+    if (actualCard.suit === this.kozi && currentWinner.card.suit !== this.kozi) {
       return koziCardValueIndex > koziCurrentWinnerValueIndex; // Higher value kozi wins
     } 
-    else if (actualCard.suit === this.kozi && currentWinner.suit === this.kozi) {
+    else if (actualCard.suit === this.kozi && currentWinner.card.suit === this.kozi) {
       return cardValueIndex > currentWinnerValueIndex; // Higher value kozi wins
     }
 

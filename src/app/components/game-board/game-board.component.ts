@@ -7,10 +7,12 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   templateUrl: './game-board.component.html',
   styleUrls: ['./game-board.component.scss']
 })
-export class GameBoardComponent implements OnInit {
+export class GameBoardComponent{
 
   players: any = [];
-  currentPlayer:any = [];
+  currentPlayer: any = [];
+  currentPLayerIndex: any = 0;
+  startingPlayerIndex = 0;
   gameMessage = '';
   isStarted = false;
   boardCards: any[] = [];  // Cards on the game board
@@ -27,8 +29,8 @@ export class GameBoardComponent implements OnInit {
   selectedBidSuit = ''; // Human's selected kozi (suit)
   minBidPoints = 8; // Minimum bid
   passCount = 0; // Track consecutive passes
-  currentBidderIndex = 0; // Track whose turn it is to bid
   bidPlaced = false; // Track if any bid was placed during the round
+  currentBidderIndex = 0
   biddingForm: FormGroup = this._fb.group({}); //Init FormGroup
   bidPointsArray: number[] = [];
 
@@ -57,9 +59,8 @@ export class GameBoardComponent implements OnInit {
   // }
 
   startKoziSelection() {
-    this.koziSelectionInProgress = true;
     this.passCount = 0;
-    this.currentBidderIndex = 0;
+    this.currentPLayerIndex = 0;
     this.promptNextBid();  // Start bidding
   }
 
@@ -68,7 +69,7 @@ export class GameBoardComponent implements OnInit {
     this.dealCardsForNewRound();
   }
 
-  initBiddingForm(accident?:any) {
+  initBiddingForm(accident?: any) {
     let NewfbGroup = this._fb.group({
       bidPoints: [8, [Validators.required, Validators.min(8), Validators.max(50)]],  // Default to 8 points, min 8, max 50
       bidSuit: ['', Validators.required]  // Suit selection is required
@@ -84,14 +85,15 @@ export class GameBoardComponent implements OnInit {
     this.players = this.gameService.getPlayers();
     this.animateDealingCards();
 
-    this.koziSelectionInProgress = true;
     this.passCount = 0;
-    this.currentBidderIndex = 0;
-    this.currentPlayer = this.players[0]
+    this.currentPLayerIndex = 0 // todo change to next index from prev round
+    this.currentBidderIndex = 0 // todo change to next index from prev round
+    this.currentPlayer = this.players[this.currentPLayerIndex]
     setTimeout(() => this.promptNextBid(), 2000);  // Delay to simulate card dealing animation
   }
 
   promptNextBid() {
+    // TODO FIX (NEED 4 CONSECUTIVE PASSES)
     if (this.passCount >= 3) {
       this.koziSelectionInProgress = false;
       this.startGameWithFinalBid();
@@ -114,13 +116,13 @@ export class GameBoardComponent implements OnInit {
       const bidPoints = this.biddingForm.get('bidPoints')?.value;
       const bidSuit = this.biddingForm.get('bidSuit')?.value;
 
-      if(this.gameService.getCurrentBid() != null){
-        if ( bidPoints <= this.gameService.getCurrentBid()!.points) {
+      if (this.gameService.getCurrentBid() != null) {
+        if (bidPoints <= this.gameService.getCurrentBid()!.points) {
           this.gameMessage = "You must bid higher than the current bid!";
           return;
         }
       }
-      
+
 
       this.updateBid(bidPoints, bidSuit, this.currentBidder);
       this.moveToNextBidder();
@@ -167,7 +169,7 @@ export class GameBoardComponent implements OnInit {
     this.gameMessage = `${finalBid!.player!.name} won the bid with ${finalBid!.points} points and ${finalBid!.suit}`;
     this.gameService.setKozi(finalBid!.suit);
     this.startRound();
-    
+
   }
 
   restartRound() {
@@ -178,7 +180,11 @@ export class GameBoardComponent implements OnInit {
     }, 2000);  // Add delay for round restart
   }
 
-  
+  getPlayerIndex(uiIndex: number): number {
+    return this.currentPLayerIndex + 1
+  }
+
+
 
   animateDealingCards() {
     const players = [
@@ -187,15 +193,15 @@ export class GameBoardComponent implements OnInit {
       this.players[2], // Top player
       this.players[3], // Left player
     ];
-  
+
     const cardSequence = [3, 2, 3]; // 3-2-3 dealing pattern
     const delayBetweenDeals = 200; // 500ms between each card deal
-  
+
     let cardCount = 0; // To keep track of how many cards have been dealt
-  
+
     const animateRound = (round: number) => {
       if (round >= cardSequence.length) return; // Stop when all rounds are done
-  
+
       const numCards = cardSequence[round];
       for (let i = 0; i < players.length; i++) {
         setTimeout(() => {
@@ -209,36 +215,38 @@ export class GameBoardComponent implements OnInit {
           }
         }, delayBetweenDeals * i * numCards); // Delay for each player's turn
       }
-  
+
       // After the round is done, proceed to next round or sorting for the human player
       setTimeout(() => {
         cardCount += numCards; // Increment the cardCount to track dealt cards
         if (round === cardSequence.length - 1) {
           // After the final round of dealing, sort the bottom player's hand (You)
-          this.players[0].hand = this.gameService.sortHand(this.players[0].hand); 
-          
+          this.players[0].hand = this.gameService.sortHand(this.players[0].hand);
+          this.koziSelectionInProgress = true;
         }
         animateRound(round + 1);
       }, delayBetweenDeals * players.length * numCards);
     };
-  
+
     animateRound(0); // Start animating from the first round
   }
 
   // Play the player's card and trigger bot turns
-  playCard(card: any , player: any) {
-    if (!this.dropAllowed) return; // Prevent dropping multiple cards
+  playCard(card: any, player: any) {
+    if (!this.dropAllowed) return;
 
     // Play the player's card
+    console.log(this.startingPlayerIndex)
     this.boardCards.push({ card, player })
     player.hand = player.hand.filter((c: any) => c.value !== card.value || c.suit !== card.suit);
     this.gameMessage = `You played ${card.value} of ${card.suit}`;
-    
+
     // Disable card dropping during bot turns
     this.dropAllowed = false;
+    let nextIndex = (this.currentPLayerIndex + 1) % this.players.length;
 
     // Trigger bot turns sequentially
-    this.playBotsTurn(1);
+    this.playBotsTurn(nextIndex);
   }
 
   playBotsTurn(currentPlayerIndex: number) {
@@ -248,92 +256,92 @@ export class GameBoardComponent implements OnInit {
       this.determineRoundWinner();
       return;
     }
-  
+
     const player = this.players[currentPlayerIndex];
-  
+
     // For bots, let them choose and play a card
     if (player.isBot) {
       const card = this.botCardSelection(player);
       this.boardCards.push({ card, player })
       this.gameMessage = `${player.name} played ${card.value} of ${card.suit}`;
-  
+
       // Simulate delay before the next player plays
+      let index = (currentPlayerIndex + 1) % this.players.length;
       setTimeout(() => {
-        this.playBotsTurn((currentPlayerIndex + 1) % this.players.length); // Move to the next player
+        this.currentPLayerIndex = index
+        this.currentPlayer = this.players[currentPlayerIndex]
+        this.playBotsTurn(this.currentPLayerIndex); // Move to the next player
       }, 1000); // 1 second delay
     } else {
       // Allow the human player to play
+      // this.currentPLayerIndex = (currentPlayerIndex + 1) % this.players.length;
+      // this.currentPlayer = this.players[this.currentPLayerIndex]
       this.dropAllowed = true;  // Enable dropping a card for the human player
     }
   }
-  
-  
+
+
   botCardSelection(bot: any) {
     const leadSuit = this.boardCards.length > 0 ? this.boardCards[0].card.suit : null;
     const kozi = this.gameService.getKozi();
-  
+
     const sameSuitCards = bot.hand.filter((card: any) => card.suit === leadSuit);
     if (sameSuitCards.length > 0) {
       return this.playCardFromBotHand(bot, sameSuitCards);
     }
-  
+
     const koziCards = bot.hand.filter((card: any) => card.suit === kozi);
     if (koziCards.length > 0) {
       return this.playCardFromBotHand(bot, koziCards);
     }
-  
+
     return this.playCardFromBotHand(bot, bot.hand);
   }
-  
+
   determineRoundWinner() {
     const winningCard = this.gameService.determineWinningCard(this.boardCards);
-  
+
     // Find the player who played the winning card
     const winningPlayer: any = winningCard.player
-  
+
     // Add the winning hand to the winner's stack
-    winningPlayer.winningHands = winningPlayer.winningHands || [];  
+    winningPlayer.winningHands = winningPlayer.winningHands || [];
 
     const playedCards = this.boardCards.map(item => ({ ...item.card }));  // Clone the cards
-    winningPlayer.winningHands.push(playedCards); 
+    winningPlayer.winningHands.push(playedCards);
     this.gameMessage = `${winningPlayer.name} won the round with ${winningCard.card.value} of ${winningCard.card.suit}`;
 
     setTimeout(() => {
       this.boardCards = []; // Start the next game after a short delay
       this.startNextRound(winningPlayer);
     }, 3000);
-  
+
     // Start the next round with the winning player playing first
-    
+
   }
 
-  
+
   startNextRound(winningPlayer: any) {
     // Find the index of the winning player and adjust the play order so that they start
     const winningPlayerIndex = this.players.indexOf(winningPlayer);
-  
-    // Set the play order with the winner first
-    const playOrder = [
-      this.players[winningPlayerIndex],
-      this.players[(winningPlayerIndex + 1) % this.players.length],
-      this.players[(winningPlayerIndex + 2) % this.players.length],
-      this.players[(winningPlayerIndex + 3) % this.players.length]
-    ];
-  
-    this.players = playOrder;  // Update the players array with the new play order
-  
+
+    this.startingPlayerIndex = winningPlayerIndex;
+    this.currentPLayerIndex = winningPlayerIndex
+    this.currentPlayer = this.players[this.currentPLayerIndex]
+
+
     // Start the next round with the new order, starting with the winner
-    this.playBotsTurn(0);  // Start with the first player in the updated order
+    this.playBotsTurn(this.startingPlayerIndex);  // Start with the first player in the updated order
   }
-  
+
 
   playCardFromBotHand(bot: any, validCards: any[]) {
     // Select the first valid card to play (you can customize this selection strategy)
     const selectedCard = validCards[0];
-    
+
     // Remove the selected card from the bot's hand
     bot.hand = bot.hand.filter((card: any) => card !== selectedCard);
-  
+
     return selectedCard;
   }
 
@@ -368,27 +376,34 @@ export class GameBoardComponent implements OnInit {
       }, 3000); // 3-second delay before starting the next game
     }
   }
-  
+
   // Allow dragover to allow card dropping
   allowDrop(event: DragEvent) {
     event.preventDefault();
   }
 
   // Handle desktop drop
-  onDrop(event: DragEvent, player: any) {
+  onDrop(event: DragEvent, playerIndex: any) {
     event.preventDefault();
     const cardData = event.dataTransfer?.getData('text');
     if (cardData) {
       const card = JSON.parse(cardData);
-      this.onCardDrop(card, player);
+      this.onCardDrop(card, this.players[playerIndex]);
     }
   }
 
   // When a card is dropped, we play it
-  onCardDrop(card: any, player:any) {
+  onCardDrop(card: any, player: any) {
     if (this.dropAllowed) {
-      
-      this.playCard(card, player);
+      let human = player
+      if (!player.isBot) {
+        this.players.forEach((p: any) => {
+          if (p.isBot == false) {
+            human = p
+          }
+        });
+      }
+      this.playCard(card, human);
     }
   }
 

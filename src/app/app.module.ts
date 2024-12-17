@@ -6,10 +6,14 @@ import { GameModule } from './features/game/game.module';
 import { MaterialModule } from './shared/material/material.module';
 import { FlexLayoutModule } from '@angular/flex-layout'
 import { FormsModule } from '@angular/forms';
+import { AppRoutingModule } from './app-routing.module';
+import { GameBoardComponent } from './components/game-board/game-board.component';
+import { MainMenu } from './components/main-menu/main-menu.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    MainMenu
   ],
   imports: [
     BrowserModule,
@@ -17,7 +21,8 @@ import { FormsModule } from '@angular/forms';
     GameModule,
     MaterialModule,
     FlexLayoutModule,
-    FormsModule
+    FormsModule,
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]
