@@ -1,3 +1,10 @@
 <div class="card">
     <img [src]="getCardImageUrl()" alt="{{ card.value }} of {{ card.suit }}" />
   </div>
+
+  <div *ngIf="false">
+    <span class="card-suit spades">♠</span>
+    <span class="card-suit hearts">♥</span>
+    <span class="card-suit diamonds">♦</span>
+    <span class="card-suit clubs">♣</span>
+  </div>

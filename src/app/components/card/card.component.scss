@@ -15,4 +15,22 @@
     object-fit: cover;  // Ensure the image scales properly
     border-radius: 5px;
   }
+
+  .card-suit {
+    font-size: 24px; /* Adjust size as needed */
+    margin: 0 5px;
+  }
+  .spades {
+    color: black;
+  }
+  .hearts {
+    color: red;
+  }
+  .diamonds {
+    color: red;
+  }
+  .clubs {
+    color: black;
+  }
+  
   

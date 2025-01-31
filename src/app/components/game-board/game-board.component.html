@@ -1,6 +1,25 @@
 <div> 
   <!-- Start Button -->
-  <button style="color:black !important;" mat-button *ngIf="!isStarted" (click)="startGame()" class="start-btn">Start Game</button>
+  <div>
+    <button style="color:black !important;" mat-button *ngIf="!isStarted" (click)="startGame()" class="start-btn">Start Game</button>
+  </div>
+  <div class="info-container">
+    <!-- Info Icon -->
+    <button mat-icon-button (click)="toggleOverlay()">
+      <mat-icon>info</mat-icon>
+    </button>
+  
+    <!-- Overlay -->
+    <div class="info-overlay" *ngIf="showOverlay">
+      <h3>Debug Stats</h3>
+      <ul>
+        <li>Team 1 Points: {{ team1Points }}</li>
+        <li>Team 2 Points: {{ team2Points }}</li>
+        <li>Current Kozi: {{ roundKozi }}</li>
+        <li>Current Round: {{ roundNumber }}</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <!-- Kozi and Bidding Dialog (positioned above the game layout to avoid blocking) -->

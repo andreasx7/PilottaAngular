@@ -7,7 +7,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   templateUrl: './game-board.component.html',
   styleUrls: ['./game-board.component.scss']
 })
-export class GameBoardComponent{
+export class GameBoardComponent {
 
   players: any = [];
   currentPlayer: any = [];
@@ -31,6 +31,7 @@ export class GameBoardComponent{
   passCount = 0; // Track consecutive passes
   bidPlaced = false; // Track if any bid was placed during the round
   currentBidderIndex = 0
+  showOverlay = false;
   biddingForm: FormGroup = this._fb.group({}); //Init FormGroup
   bidPointsArray: number[] = [];
 
@@ -39,6 +40,9 @@ export class GameBoardComponent{
     private _fb: FormBuilder,
   ) { }
 
+  get roundKozi() {
+    return this.gameService.getKozi()
+  }
   ngOnInit(): void {
     this.biddingForm = this.initBiddingForm()
     this.bidPointsArray = Array.from({ length: 43 }, (_, i) => i + 8);
@@ -69,6 +73,10 @@ export class GameBoardComponent{
     this.dealCardsForNewRound();
   }
 
+  toggleOverlay() {
+    this.showOverlay = !this.showOverlay;
+  }
+
   initBiddingForm(accident?: any) {
     let NewfbGroup = this._fb.group({
       bidPoints: [8, [Validators.required, Validators.min(8), Validators.max(50)]],  // Default to 8 points, min 8, max 50
@@ -93,23 +101,25 @@ export class GameBoardComponent{
   }
 
   promptNextBid() {
-    // TODO FIX (NEED 4 CONSECUTIVE PASSES)
+    // Check if bidding should end (3 passes)
     if (this.passCount >= 3) {
-      this.koziSelectionInProgress = false;
-      this.startGameWithFinalBid();
-      return;
+        this.koziSelectionInProgress = false;
+        this.startGameWithFinalBid(); // Start the game with the highest bid
+        return;
     }
 
+    // Move to the next bidder
     this.currentBidder = this.players[this.currentBidderIndex];
-    this.currentPlayer = this.players[0]
+    this.currentPlayer = this.players[0]; // Assuming first player is main player
 
-
+    // Player's Turn
     if (!this.currentBidder.isBot) {
-      this.gameMessage = `Your turn to bid. Current highest bid: ${this.gameService.getCurrentBid()?.points || 0} with ${this.gameService.getCurrentBid()?.suit || 'none'}`;
+        this.gameMessage = `Your turn to bid. Current highest bid: ${this.gameService.getCurrentBid()?.points || 0} with ${this.gameService.getCurrentBid()?.suit || 'none'}`;
     } else {
-      this.botBid(this.currentBidder);
+        this.botBid(this.currentBidder); // Bot makes a bid
     }
-  }
+}
+
 
   placeBid() {
     if (this.biddingForm.valid) {
@@ -133,31 +143,71 @@ export class GameBoardComponent{
 
   passBid() {
     this.passCount++;
-    this.moveToNextBidder();
+
+    // If 3 passes happen, end the bidding phase
+    if (this.passCount >= 3) {
+        this.startGameWithFinalBid();
+    } else {
+        this.moveToNextBidder();
+    }
   }
+
+
 
   botBid(bot: any) {
     setTimeout(() => {
-      const currentBid = this.gameService.getCurrentBid();
-      const shouldBid = Math.random() > 0.5;
+        // If bidding is already over, stop
+        if (this.passCount >= 3) {
+          this.moveToNextBidder()
+        };
 
-      if (shouldBid && currentBid?.points! < 50) {
-        const newPoints = currentBid?.points ? currentBid.points + 1 : 8;
-        const randomSuit = this.suits[Math.floor(Math.random() * this.suits.length)];
+        const currentBid = this.gameService.getCurrentBid();
+        const botHand = bot.hand;
+        const strongSuit = this.gameService.evaluateBestSuit(botHand);
+        const handStrength = this.gameService.evaluateHandStrength(botHand, strongSuit);
 
-        this.updateBid(newPoints, randomSuit, bot);
-        this.passCount = 0;
-        this.moveToNextBidder();
-      } else {
-        this.passBid();
-      }
+        const maxReasonableBid = this.gameService.calculateMaxBid(botHand, strongSuit); // New function
+        const bidIncrement = 1; // Bots should raise by small increments
+        const minStartBid = 8; // The lowest possible bid
+
+        if (!currentBid) {
+            // Scenario 1: First bid (bot is the first bidder)
+            if (handStrength >= 7) { 
+                this.updateBid(minStartBid, strongSuit, bot);
+                this.passCount = 0;
+                this.moveToNextBidder();
+            } else {
+                this.passBid();
+            }
+        } else {
+            // Scenario 2: Responding to an existing bid
+            const shouldCompete = this.gameService.shouldRaiseBid(botHand, currentBid);
+
+            if (shouldCompete && currentBid.points + bidIncrement <= maxReasonableBid) {
+                const newPoints = Math.min(currentBid.points + bidIncrement, maxReasonableBid);
+                this.updateBid(newPoints, strongSuit, bot);
+                this.passCount = 0;
+                this.moveToNextBidder();
+            } else {
+                this.passBid();
+            }
+        }
     }, 1000);
-  }
+}
+
+
 
   moveToNextBidder() {
+    // Stop bidding if 3 players have passed
+    if (this.passCount >= 3) {
+        this.startGameWithFinalBid();
+        return;
+    }
+
     this.currentBidderIndex = (this.currentBidderIndex + 1) % this.players.length;
     this.promptNextBid();
-  }
+}
+
 
   updateBid(points: number, suit: string, player: any) {
     this.gameService.updateBid(points, suit, player);
@@ -166,9 +216,13 @@ export class GameBoardComponent{
 
   startGameWithFinalBid() {
     const finalBid = this.gameService.getCurrentBid();
-    this.gameMessage = `${finalBid!.player!.name} won the bid with ${finalBid!.points} points and ${finalBid!.suit}`;
-    this.gameService.setKozi(finalBid!.suit);
-    this.startRound();
+    if (finalBid == null) {
+      this.restartRound()
+    } else {
+      this.gameMessage = `${finalBid!.player!.name} won the bid with ${finalBid!.points} points and ${finalBid!.suit}`;
+      this.gameService.setKozi(finalBid!.suit);
+      this.startRound();
+    }
 
   }
 
