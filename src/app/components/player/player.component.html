@@ -1,20 +1,22 @@
 <div class="player-hand" [ngStyle]="{ 'transform': getHandRotation() }">
-    <div *ngFor="let card of player.hand; let i = index"
-     class="card"
-     [draggable]="isBottomPlayer"
-     [attr.data-card-id]="card.value + '-' + card.suit"
-     (dragstart)="onDragStart($event, card)"
-     (touchstart)="onTouchStart($event, card)"
-     (touchmove)="onTouchMove($event)"
-     (touchend)="onTouchEnd($event)" 
-    [ngClass]="{'dealt': card.dealt, 'sorted': isSorted}">
-      <!-- Show only your cards (bottom player), face-down for others -->
-      <ng-container *ngIf="position === 'bottom'; else faceDown">
-        <app-card [card]="card"></app-card>
-      </ng-container>
-      <ng-template #faceDown>
-        <!-- Display face-down card for other players -->
-        <div class="card card-face-down"></div>
-      </ng-template>
-    </div>
+    <ng-template [ngIf]="player">
+      <div *ngFor="let card of player.hand; let i = index"
+       class="card"
+       [draggable]="isBottomPlayer"
+       [attr.data-card-id]="card.value + '-' + card.suit"
+       (dragstart)="onDragStart($event, card)"
+       (touchstart)="onTouchStart($event, card)"
+       (touchmove)="onTouchMove($event)"
+       (touchend)="onTouchEnd($event)"
+      [ngClass]="{'dealt': card.dealt, 'sorted': isSorted}">
+        <!-- Show only your cards (bottom player), face-down for others -->
+        <ng-container *ngIf="position === 'bottom'; else faceDown">
+          <app-card [card]="card"></app-card>
+        </ng-container>
+        <ng-template #faceDown>
+          <!-- Display face-down card for other players -->
+          <div class="card card-face-down"></div>
+        </ng-template>
+      </div>
+    </ng-template>
   </div>

@@ -103,7 +103,7 @@ export class GameBoardComponent {
   promptNextBid() {
     // Check if bidding should end (3 passes)
     if (this.passCount >= 3) {
-        this.koziSelectionInProgress = false;
+        
         this.startGameWithFinalBid(); // Start the game with the highest bid
         return;
     }
@@ -219,6 +219,7 @@ export class GameBoardComponent {
     if (finalBid == null) {
       this.restartRound()
     } else {
+      this.koziSelectionInProgress = false;
       this.gameMessage = `${finalBid!.player!.name} won the bid with ${finalBid!.points} points and ${finalBid!.suit}`;
       this.gameService.setKozi(finalBid!.suit);
       this.startRound();
@@ -339,18 +340,22 @@ export class GameBoardComponent {
     const leadSuit = this.boardCards.length > 0 ? this.boardCards[0].card.suit : null;
     const kozi = this.gameService.getKozi();
 
+    // 1️⃣ **If the bot has cards of the leading suit, it MUST play one**
     const sameSuitCards = bot.hand.filter((card: any) => card.suit === leadSuit);
     if (sameSuitCards.length > 0) {
-      return this.playCardFromBotHand(bot, sameSuitCards);
+        return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(sameSuitCards));
     }
 
+    // 2️⃣ **If the bot has no leading suit cards, it MUST play a kozi card**
     const koziCards = bot.hand.filter((card: any) => card.suit === kozi);
     if (koziCards.length > 0) {
-      return this.playCardFromBotHand(bot, koziCards);
+        return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(koziCards));
     }
 
-    return this.playCardFromBotHand(bot, bot.hand);
-  }
+    // 3️⃣ **If neither rule applies, play any other card**
+    return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(bot.hand));
+}
+
 
   determineRoundWinner() {
     const winningCard = this.gameService.determineWinningCard(this.boardCards);
@@ -389,15 +394,13 @@ export class GameBoardComponent {
   }
 
 
-  playCardFromBotHand(bot: any, validCards: any[]) {
-    // Select the first valid card to play (you can customize this selection strategy)
-    const selectedCard = validCards[0];
-
+  playCardFromBotHand(bot: any, selectedCard: any) {
     // Remove the selected card from the bot's hand
-    bot.hand = bot.hand.filter((card: any) => card !== selectedCard);
+    bot.hand = bot.hand.filter((card: any) => !(card.suit === selectedCard.suit && card.value === selectedCard.value));
 
     return selectedCard;
-  }
+}
+
 
   // Assign points based on which team won the round
   assignPoints(winningPlayer: any) {

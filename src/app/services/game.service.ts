@@ -90,21 +90,17 @@ export class GameService {
     // Get the unique suits present in the hand
     const suitsInHand = [...new Set(hand.map(card => card.suit))];
 
-    // Create the alternated suit order dynamically
-    let orderedSuits: string[] = [];
+    // Separate available suits into black and red groups
     const availableBlacks = blackSuits.filter(suit => suitsInHand.includes(suit));
     const availableReds = redSuits.filter(suit => suitsInHand.includes(suit));
 
-    // Start with the first color available and alternate
-    if (availableReds.length > 0) {
-      // At least one red suit exists, so start with black
-      while (availableBlacks.length || availableReds.length) {
-        if (availableBlacks.length) orderedSuits.push(availableBlacks.shift()!);
-        if (availableReds.length) orderedSuits.push(availableReds.shift()!);
-      }
-    } else {
-      // No red suits, just keep the black suits in normal order
-      orderedSuits = availableBlacks;
+    // Strictly alternate suits
+    let orderedSuits: string[] = [];
+    const maxLen = Math.max(availableBlacks.length, availableReds.length);
+    
+    for (let i = 0; i < maxLen; i++) {
+        if (i < availableBlacks.length) orderedSuits.push(availableBlacks[i]);
+        if (i < availableReds.length) orderedSuits.push(availableReds[i]);
     }
 
     // Create a mapping of suits to their order dynamically
@@ -114,14 +110,15 @@ export class GameService {
     const valueOrder: any = { 'ace': 8, 'king': 7, 'queen': 6, 'jack': 5, '10': 4, '9': 3, '8': 2, '7': 1 };
 
     return hand.sort((a, b) => {
-      // Compare by suit order first
-      if (suitOrder[a.suit] !== suitOrder[b.suit]) {
-        return suitOrder[a.suit] - suitOrder[b.suit];
-      }
-      // If suits are the same, compare by value order
-      return valueOrder[a.value] - valueOrder[b.value];
+        // Compare by suit order first
+        if (suitOrder[a.suit] !== suitOrder[b.suit]) {
+            return suitOrder[a.suit] - suitOrder[b.suit];
+        }
+        // If suits are the same, compare by value order
+        return valueOrder[a.value] - valueOrder[b.value];
     });
-  }
+}
+
 
   shouldRaiseBid(hand: Card[], currentBid: { points: number; suit: string }): boolean {
     const bestSuit = this.evaluateBestSuit(hand);
@@ -185,6 +182,12 @@ evaluateHandStrength(hand: Card[], bestSuit: string): number {
   calculatePoints() {
 
   }
+
+  getLowestValueCard(cards: any[]): any {
+    const valueOrder: any = { '7': 1, '8': 2, '9': 3,'jack': 4, 'queen': 5, 'king': 6, '10': 7, 'ace': 8 };
+    return cards.reduce((lowest, card) => (valueOrder[card.value] < valueOrder[lowest.value] ? card : lowest), cards[0]);
+}
+
 
   determineWinningCard(boardCards: any[]): any {
     if (boardCards.length === 0) {

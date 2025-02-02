@@ -17,7 +17,8 @@ export class PlayerComponent {
   originalY = 0;
   currentCardElement: any;
 
-  constructor(private renderer: Renderer2, private elRef: ElementRef) {}
+  constructor(private renderer: Renderer2, private elRef: ElementRef) {
+  }
   
   get isBottomPlayer() {
     return this.position === 'bottom';
