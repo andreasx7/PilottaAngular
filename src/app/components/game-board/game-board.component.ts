@@ -34,6 +34,7 @@ export class GameBoardComponent {
   showOverlay = false;
   biddingForm: FormGroup = this._fb.group({}); //Init FormGroup
   bidPointsArray: number[] = [];
+  lastRoundWinner = null;
 
 
   constructor(private gameService: GameService,
@@ -44,8 +45,7 @@ export class GameBoardComponent {
     return this.gameService.getKozi()
   }
   ngOnInit(): void {
-    this.biddingForm = this.initBiddingForm()
-    this.bidPointsArray = Array.from({ length: 43 }, (_, i) => i + 8);
+    
   }
 
   // startGame() {
@@ -69,6 +69,9 @@ export class GameBoardComponent {
   }
 
   startGame() {
+    this.resetRoundVars();
+    this.biddingForm = this.initBiddingForm()
+    this.bidPointsArray = Array.from({ length: 43 }, (_, i) => i + 8);
     this.isStarted = true;
     this.dealCardsForNewRound();
   }
@@ -96,6 +99,7 @@ export class GameBoardComponent {
     this.passCount = 0;
     this.currentPLayerIndex = 0 // todo change to next index from prev round
     this.currentBidderIndex = 0 // todo change to next index from prev round
+    this.roundNumber = 0;
     this.currentPlayer = this.players[this.currentPLayerIndex]
     setTimeout(() => this.promptNextBid(), 2000);  // Delay to simulate card dealing animation
   }
@@ -103,9 +107,9 @@ export class GameBoardComponent {
   promptNextBid() {
     // Check if bidding should end (3 passes)
     if (this.passCount >= 3) {
-        
-        this.startGameWithFinalBid(); // Start the game with the highest bid
-        return;
+
+      this.startGameWithFinalBid(); // Start the game with the highest bid
+      return;
     }
 
     // Move to the next bidder
@@ -114,11 +118,11 @@ export class GameBoardComponent {
 
     // Player's Turn
     if (!this.currentBidder.isBot) {
-        this.gameMessage = `Your turn to bid. Current highest bid: ${this.gameService.getCurrentBid()?.points || 0} with ${this.gameService.getCurrentBid()?.suit || 'none'}`;
+      this.gameMessage = `Your turn to bid. Current highest bid: ${this.gameService.getCurrentBid()?.points || 0} with ${this.gameService.getCurrentBid()?.suit || 'none'}`;
     } else {
-        this.botBid(this.currentBidder); // Bot makes a bid
+      this.botBid(this.currentBidder); // Bot makes a bid
     }
-}
+  }
 
 
   placeBid() {
@@ -146,9 +150,9 @@ export class GameBoardComponent {
 
     // If 3 passes happen, end the bidding phase
     if (this.passCount >= 3) {
-        this.startGameWithFinalBid();
+      this.startGameWithFinalBid();
     } else {
-        this.moveToNextBidder();
+      this.moveToNextBidder();
     }
   }
 
@@ -156,57 +160,57 @@ export class GameBoardComponent {
 
   botBid(bot: any) {
     setTimeout(() => {
-        // If bidding is already over, stop
-        if (this.passCount >= 3) {
-          this.moveToNextBidder()
-        };
+      // If bidding is already over, stop
+      if (this.passCount >= 3) {
+        this.moveToNextBidder()
+      };
 
-        const currentBid = this.gameService.getCurrentBid();
-        const botHand = bot.hand;
-        const strongSuit = this.gameService.evaluateBestSuit(botHand);
-        const handStrength = this.gameService.evaluateHandStrength(botHand, strongSuit);
+      const currentBid = this.gameService.getCurrentBid();
+      const botHand = bot.hand;
+      const strongSuit = this.gameService.evaluateBestSuit(botHand);
+      const handStrength = this.gameService.evaluateHandStrength(botHand, strongSuit);
 
-        const maxReasonableBid = this.gameService.calculateMaxBid(botHand, strongSuit); // New function
-        const bidIncrement = 1; // Bots should raise by small increments
-        const minStartBid = 8; // The lowest possible bid
+      const maxReasonableBid = this.gameService.calculateMaxBid(botHand, strongSuit); // New function
+      const bidIncrement = 1; // Bots should raise by small increments
+      const minStartBid = 8; // The lowest possible bid
 
-        if (!currentBid) {
-            // Scenario 1: First bid (bot is the first bidder)
-            if (handStrength >= 7) { 
-                this.updateBid(minStartBid, strongSuit, bot);
-                this.passCount = 0;
-                this.moveToNextBidder();
-            } else {
-                this.passBid();
-            }
+      if (!currentBid) {
+        // Scenario 1: First bid (bot is the first bidder)
+        if (handStrength >= 7) {
+          this.updateBid(minStartBid, strongSuit, bot);
+          this.passCount = 0;
+          this.moveToNextBidder();
         } else {
-            // Scenario 2: Responding to an existing bid
-            const shouldCompete = this.gameService.shouldRaiseBid(botHand, currentBid);
-
-            if (shouldCompete && currentBid.points + bidIncrement <= maxReasonableBid) {
-                const newPoints = Math.min(currentBid.points + bidIncrement, maxReasonableBid);
-                this.updateBid(newPoints, strongSuit, bot);
-                this.passCount = 0;
-                this.moveToNextBidder();
-            } else {
-                this.passBid();
-            }
+          this.passBid();
         }
+      } else {
+        // Scenario 2: Responding to an existing bid
+        const shouldCompete = this.gameService.shouldRaiseBid(botHand, currentBid);
+
+        if (shouldCompete && currentBid.points + bidIncrement <= maxReasonableBid) {
+          const newPoints = Math.min(currentBid.points + bidIncrement, maxReasonableBid);
+          this.updateBid(newPoints, strongSuit, bot);
+          this.passCount = 0;
+          this.moveToNextBidder();
+        } else {
+          this.passBid();
+        }
+      }
     }, 1000);
-}
+  }
 
 
 
   moveToNextBidder() {
     // Stop bidding if 3 players have passed
     if (this.passCount >= 3) {
-        this.startGameWithFinalBid();
-        return;
+      this.startGameWithFinalBid();
+      return;
     }
 
     this.currentBidderIndex = (this.currentBidderIndex + 1) % this.players.length;
     this.promptNextBid();
-}
+  }
 
 
   updateBid(points: number, suit: string, player: any) {
@@ -343,18 +347,18 @@ export class GameBoardComponent {
     // 1️⃣ **If the bot has cards of the leading suit, it MUST play one**
     const sameSuitCards = bot.hand.filter((card: any) => card.suit === leadSuit);
     if (sameSuitCards.length > 0) {
-        return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(sameSuitCards));
+      return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(sameSuitCards));
     }
 
     // 2️⃣ **If the bot has no leading suit cards, it MUST play a kozi card**
     const koziCards = bot.hand.filter((card: any) => card.suit === kozi);
     if (koziCards.length > 0) {
-        return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(koziCards));
+      return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(koziCards));
     }
 
     // 3️⃣ **If neither rule applies, play any other card**
     return this.playCardFromBotHand(bot, this.gameService.getLowestValueCard(bot.hand));
-}
+  }
 
 
   determineRoundWinner() {
@@ -370,17 +374,73 @@ export class GameBoardComponent {
     winningPlayer.winningHands.push(playedCards);
     this.gameMessage = `${winningPlayer.name} won the round with ${winningCard.card.value} of ${winningCard.card.suit}`;
 
+    if (this.roundNumber === 8) {
+      this.lastRoundWinner = winningPlayer;
+  }
+
     setTimeout(() => {
       this.boardCards = []; // Start the next game after a short delay
-      this.startNextRound(winningPlayer);
+      this.roundNumber++;
+      if (this.roundNumber >= 8) {
+        this.storeRoundPoints()
+      }
+      else {
+        this.startNextRound(winningPlayer);
+      }
     }, 3000);
+
 
     // Start the next round with the winning player playing first
 
   }
 
+  storeRoundPoints() {
+    let team1Cards: any[] = [];
+    let team2Cards: any[] = [];
+
+    // Collect won cards for each team
+    this.players.forEach((player: any) => {
+        if (player.winningHands) {
+            if (this.isTeam1(player)) {
+                team1Cards.push(...player.winningHands);
+            } else {
+                team2Cards.push(...player.winningHands);
+            }
+        }
+    });
+
+    // Call storeRoundPoints with the last round winner
+    this.gameService.storeRoundPoints([], team1Cards, team2Cards, this.lastRoundWinner);
+
+    // Reset for next round
+    this.roundNumber = 0;
+    this.team1Points = this.gameService.teamPoints.team1;
+    this.team2Points = this.gameService.teamPoints.team2;
+
+    this.gameMessage += ` | Team 1: ${this.team1Points} points, Team 2: ${this.team2Points} points`;
+
+    // Check if the game has ended
+    if (this.team1Points >= this.winningScore || this.team2Points >= this.winningScore) {
+        this.endGame();
+    } else {
+        setTimeout(() => {
+            this.startGame(); // Start new game round
+        }, 3000);
+    }
+}
+
+
+  isTeam1(player: any): boolean {
+    return this.players.indexOf(player) === 0 || this.players.indexOf(player) === 2;
+  }
+
+  resetRoundVars() {
+    this.gameService.setKozi(null);
+  }
+
 
   startNextRound(winningPlayer: any) {
+    
     // Find the index of the winning player and adjust the play order so that they start
     const winningPlayerIndex = this.players.indexOf(winningPlayer);
 
@@ -399,7 +459,7 @@ export class GameBoardComponent {
     bot.hand = bot.hand.filter((card: any) => !(card.suit === selectedCard.suit && card.value === selectedCard.value));
 
     return selectedCard;
-}
+  }
 
 
   // Assign points based on which team won the round
