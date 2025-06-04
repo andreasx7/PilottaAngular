@@ -59,7 +59,8 @@
 <div class="game-layout">
   <!-- Section 1: Left Player -->
   <div class="section1 player-side">
-    <div class="player-label">Player 4</div>
+    <div class="player-label"
+    [ngClass]="{'selected': currentPLayerIndex === 3}">Player 4</div>
     <app-player [player]="players[3]" position="left" (cardDropped)="onCardDrop($event,players[3])"></app-player>
   </div>
 
@@ -67,7 +68,8 @@
   <div class="section2">
     <!-- Top Player -->
     <div class="top-player player-side">
-      <div class="player-label">Player 3</div>
+      <div class="player-label"
+      [ngClass]="{'selected': currentPLayerIndex === 2}">Player 3</div>
       <app-player [player]="players[2]" position="top" (cardDropped)="onCardDrop($event,players[2])"></app-player>
     </div>
 
@@ -93,14 +95,16 @@
 
     <!-- Bottom Player -->
     <div class="bottom-player player-side">
-      <div class="player-label">You</div>
+      <div class="player-label"
+      [ngClass]="{'selected': currentPLayerIndex === 0}">You</div>
       <app-player [player]="players[0]" position="bottom" (cardDropped)="onCardDrop($event,players[0])"></app-player>
     </div>
   </div>
 
   <!-- Section 3: Right Player -->
   <div class="section3 player-side">
-    <div class="player-label">Player 2</div>
+    <div class="player-label"
+    [ngClass]="{'selected': currentPLayerIndex === 1}">Player 2</div>
     <app-player [player]="players[1]" position="right" (cardDropped)="onCardDrop($event,players[1])"></app-player>
   </div>
 </div>
