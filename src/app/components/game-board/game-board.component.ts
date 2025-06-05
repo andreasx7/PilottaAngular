@@ -246,49 +246,60 @@ export class GameBoardComponent {
 
 
   animateDealingCards() {
-    const players = [
-      this.players[0], // Bottom player (You)
-      this.players[1], // Right player
-      this.players[2], // Top player
-      this.players[3], // Left player
+  const players = [
+    this.players[0], // Bottom player (You)
+    this.players[1], // Right player
+    this.players[2], // Top player
+    this.players[3], // Left player
+  ];
+
+  const cardSequence = [3, 2, 3]; // 3-2-3 dealing pattern
+  const delayBetweenDeals = 200;
+
+  let cardCount = 0;
+  let startingPlayerIndex = 0; // New! Track who starts each round
+
+  const animateRound = (round: number) => {
+    if (round >= cardSequence.length) return;
+
+    const numCards = cardSequence[round];
+
+    // Rotate players based on the starting player index
+    const rotatedPlayers = [
+      players[startingPlayerIndex % 4],
+      players[(startingPlayerIndex + 1) % 4],
+      players[(startingPlayerIndex + 2) % 4],
+      players[(startingPlayerIndex + 3) % 4],
     ];
 
-    const cardSequence = [3, 2, 3]; // 3-2-3 dealing pattern
-    const delayBetweenDeals = 200; // 500ms between each card deal
-
-    let cardCount = 0; // To keep track of how many cards have been dealt
-
-    const animateRound = (round: number) => {
-      if (round >= cardSequence.length) return; // Stop when all rounds are done
-
-      const numCards = cardSequence[round];
-      for (let i = 0; i < players.length; i++) {
-        setTimeout(() => {
-          for (let j = 0; j < numCards; j++) {
-            setTimeout(() => {
-              const card = players[i].hand[j + cardCount];
-              if (card) {
-                card.dealt = true; // Mark the card as dealt to trigger the CSS animation
-              }
-            }, delayBetweenDeals * j); // Delay for each card
-          }
-        }, delayBetweenDeals * i * numCards); // Delay for each player's turn
-      }
-
-      // After the round is done, proceed to next round or sorting for the human player
+    for (let i = 0; i < rotatedPlayers.length; i++) {
       setTimeout(() => {
-        cardCount += numCards; // Increment the cardCount to track dealt cards
-        if (round === cardSequence.length - 1) {
-          // After the final round of dealing, sort the bottom player's hand (You)
-          this.players[0].hand = this.gameService.sortHand(this.players[0].hand);
-          this.koziSelectionInProgress = true;
+        for (let j = 0; j < numCards; j++) {
+          setTimeout(() => {
+            const player = rotatedPlayers[i];
+            const card = player.hand[j + cardCount];
+            if (card) {
+              card.dealt = true;
+            }
+          }, delayBetweenDeals * j);
         }
-        animateRound(round + 1);
-      }, delayBetweenDeals * players.length * numCards);
-    };
+      }, delayBetweenDeals * i * numCards);
+    }
 
-    animateRound(0); // Start animating from the first round
-  }
+    setTimeout(() => {
+      cardCount += numCards;
+      if (round === cardSequence.length - 1) {
+        this.players[0].hand = this.gameService.sortHand(this.players[0].hand);
+        this.koziSelectionInProgress = true;
+      }
+      startingPlayerIndex = (startingPlayerIndex + 1) % 4; // Rotate!
+      animateRound(round + 1);
+    }, delayBetweenDeals * rotatedPlayers.length * numCards);
+  };
+
+  animateRound(0);
+}
+
 
   // Play the player's card and trigger bot turns
   playCard(card: any, player: any) {
